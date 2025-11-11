@@ -1,0 +1,23 @@
+# Variables de entorno con información sensible
+.env.local
+.env.production
+
+# Backups
+*.sql
+*.tar.gz
+backup_*
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.claude
+archivos_esenciales/

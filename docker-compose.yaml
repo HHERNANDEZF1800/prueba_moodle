@@ -1,0 +1,115 @@
+services:
+  # Servidor web con PHP y Apache
+  moodle:
+    build:
+      context: ./docker/moodle
+      dockerfile: Dockerfile
+    container_name: moodle_app
+    restart: unless-stopped
+    ports:
+      - "${MOODLE_PORT:-9080}:80"
+    environment:
+      - MOODLE_DB_TYPE=mariadb
+      - MOODLE_DB_HOST=mariadb
+      - MOODLE_DB_NAME=${MOODLE_DATABASE_NAME:-moodle}
+      - MOODLE_DB_USER=${MOODLE_DATABASE_USER:-moodle}
+      - MOODLE_DB_PASSWORD=${MOODLE_DATABASE_PASSWORD:-moodle_password}
+      - MOODLE_ADMIN_USER=${MOODLE_ADMIN_USER:-admin}
+      - MOODLE_ADMIN_PASSWORD=${MOODLE_ADMIN_PASSWORD:-Admin123!SecurePass}
+      - MOODLE_ADMIN_EMAIL=${MOODLE_ADMIN_EMAIL:-admin@example.com}
+      - MOODLE_SITE_NAME=${MOODLE_SITE_NAME:-Mi Plataforma Moodle}
+      - MOODLE_URL=http://localhost:${MOODLE_PORT:-9080}
+    volumes:
+      - moodle_data:/var/www/html
+      - moodledata_data:/var/www/moodledata
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - moodle_network
+
+  # Base de datos MariaDB
+  mariadb:
+    image: mariadb:10.11
+    container_name: moodle_mariadb
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root_password}
+      - MYSQL_DATABASE=${MOODLE_DATABASE_NAME:-moodle}
+      - MYSQL_USER=${MOODLE_DATABASE_USER:-moodle}
+      - MYSQL_PASSWORD=${MOODLE_DATABASE_PASSWORD:-moodle_password}
+      - MYSQL_CHARACTER_SET_SERVER=utf8mb4
+      - MYSQL_COLLATION_SERVER=utf8mb4_unicode_ci
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./docker/mariadb/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    networks:
+      - moodle_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # phpMyAdmin para administración de base de datos
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: moodle_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "${PHPMYADMIN_PORT:-8081}:80"
+    environment:
+      - PMA_HOST=mariadb
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=${MYSQL_ROOT_PASSWORD:-root_password}
+      - UPLOAD_LIMIT=${PMA_UPLOAD_LIMIT:-256M}
+    depends_on:
+      - mariadb
+    networks:
+      - moodle_network
+
+  # Redis para caché (opcional pero recomendado)
+  redis:
+    image: redis:7-alpine
+    container_name: moodle_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - moodle_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Mailhog para pruebas de correo (desarrollo)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: moodle_mailhog
+    restart: unless-stopped
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_WEB_PORT:-8025}:8025"
+    networks:
+      - moodle_network
+
+volumes:
+  moodle_data:
+    driver: local
+  moodledata_data:
+    driver: local
+  mariadb_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  moodle_network:
+    driver: bridge
