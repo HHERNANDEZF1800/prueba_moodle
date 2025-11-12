@@ -22,7 +22,7 @@ Este proyecto contiene la configuración completa para ejecutar Moodle en conten
 ### 1. Clonar o descargar el proyecto
 
 ```bash
-cd /home/phoenix/sesna/desarrollo/noSESNA/moodle
+git clone git@github.com:HHERNANDEZF1800/prueba_moodle.git
 ```
 
 ### 2. Configurar las variables de entorno
@@ -85,10 +85,12 @@ Una vez que los contenedores estén corriendo:
 ### Credenciales por defecto
 
 **Moodle:**
+
 - Usuario: `admin` (o el valor de `MOODLE_ADMIN_USER`)
 - Contraseña: `Admin123!SecurePass` (o el valor de `MOODLE_ADMIN_PASSWORD`)
 
 **phpMyAdmin:**
+
 - Servidor: `mariadb`
 - Usuario: `root`
 - Contraseña: El valor de `MYSQL_ROOT_PASSWORD` en `.env`
@@ -207,22 +209,26 @@ docker-compose up -d
 ### El contenedor de Moodle se reinicia constantemente
 
 Verifica los logs:
+
 ```bash
 docker-compose logs moodle
 ```
 
 Posibles causas:
+
 - La base de datos no está lista. Espera unos minutos más.
 - Problemas de memoria. Aumenta la RAM disponible para Docker.
 
 ### No puedo acceder a Moodle
 
 1. Verifica que todos los contenedores estén corriendo:
+
    ```bash
    docker-compose ps
    ```
 
 2. Verifica que los puertos no estén ocupados:
+
    ```bash
    sudo netstat -tulpn | grep -E '9080|9443'
    ```
@@ -235,11 +241,13 @@ Posibles causas:
 ### Error de base de datos
 
 1. Verifica que MariaDB esté corriendo:
+
    ```bash
    docker-compose ps mariadb
    ```
 
 2. Revisa los logs de MariaDB:
+
    ```bash
    docker-compose logs mariadb
    ```
@@ -262,17 +270,20 @@ docker-compose exec moodle chown -R daemon:daemon /bitnami/moodle /bitnami/moodl
 Para usar en producción, considera:
 
 1. **Seguridad:**
+
    - Cambia TODAS las contraseñas en `.env`
    - Usa HTTPS con certificados válidos
    - Configura un firewall
    - Cierra los puertos innecesarios (phpMyAdmin, Mailhog)
 
 2. **Rendimiento:**
+
    - Ajusta `PHP_MEMORY_LIMIT` según tus necesidades
    - Configura Redis correctamente
    - Optimiza la configuración de MariaDB en `docker/mariadb/custom.cnf`
 
 3. **Backup:**
+
    - Configura backups automáticos diarios
    - Almacena backups en ubicación externa
 

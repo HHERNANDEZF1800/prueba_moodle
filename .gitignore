@@ -20,3 +20,5 @@ Thumbs.db
 *.swp
 *.swo
 archivos_esenciales/
+.env
+DOCUMENTACION_COMPLETA.md
